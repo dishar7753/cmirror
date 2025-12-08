@@ -1,0 +1,50 @@
+{
+  "docker": [
+    { "name": "DockerProxy", "url": "https://dockerproxy.com" },
+    { "name": "DaoCloud", "url": "https://f1361db2.m.daocloud.io" },
+    { "name": "NanjingU", "url": "https://docker.nju.edu.cn" },
+    { "name": "Aliyun", "url": "https://kfwkfulq.mirror.aliyuncs.com" },
+    { "name": "Official", "url": "https://registry.hub.docker.com" }
+  ],
+  "npm": [
+    { "name": "Taobao", "url": "https://registry.npmmirror.com/" },
+    { "name": "Tencent", "url": "https://mirrors.cloud.tencent.com/npm/" },
+    { "name": "Huaweicloud", "url": "https://mirrors.huaweicloud.com/repository/npm/" },
+    { "name": "Official", "url": "https://registry.npmjs.org/" }
+  ],
+  "pip": [
+    { "name": "Aliyun", "url": "https://mirrors.aliyun.com/pypi/simple/" },
+    { "name": "Tuna", "url": "https://pypi.tuna.tsinghua.edu.cn/simple" },
+    { "name": "Tencent", "url": "https://mirrors.cloud.tencent.com/pypi/simple" },
+    { "name": "USTC", "url": "https://mirrors.ustc.edu.cn/pypi/simple" },
+    { "name": "Douban", "url": "https://pypi.doubanio.com/simple" },
+    { "name": "Official", "url": "https://pypi.org/simple" }
+  ],
+  "go": [
+    { "name": "Goproxy.cn", "url": "https://goproxy.cn" },
+    { "name": "Aliyun", "url": "https://mirrors.aliyun.com/goproxy/" },
+    { "name": "Official", "url": "https://proxy.golang.org" }
+  ],
+  "cargo": [
+    { "name": "Tuna", "url": "sparse+https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/" },
+    { "name": "USTC", "url": "sparse+https://mirrors.ustc.edu.cn/crates.io-index/" },
+    { "name": "Official", "url": "sparse+https://index.crates.io/" }
+  ],
+  "brew": [
+    { "name": "Tuna", "url": "https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api" },
+    { "name": "USTC", "url": "https://mirrors.ustc.edu.cn/homebrew-bottles/api" },
+    { "name": "Official", "url": "https://formulae.brew.sh/api" }
+  ],
+  "apt-ubuntu": [
+    { "name": "Aliyun", "url": "http://mirrors.aliyun.com/ubuntu/" },
+    { "name": "Tuna", "url": "http://mirrors.tuna.tsinghua.edu.cn/ubuntu/" },
+    { "name": "USTC", "url": "http://mirrors.ustc.edu.cn/ubuntu/" },
+    { "name": "Official", "url": "http://archive.ubuntu.com/ubuntu/" }
+  ],
+  "apt-debian": [
+    { "name": "Aliyun", "url": "http://mirrors.aliyun.com/debian/" },
+    { "name": "Tuna", "url": "http://mirrors.tuna.tsinghua.edu.cn/debian/" },
+    { "name": "USTC", "url": "http://mirrors.ustc.edu.cn/debian/" },
+    { "name": "Official", "url": "http://deb.debian.org/debian/" }
+  ]
+}

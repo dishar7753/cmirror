@@ -1,0 +1,22 @@
+[package]
+name = "cmirror"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }  # 异步运行时
+clap = { version = "4.0", features = ["derive"] } # CLI 参数解析
+reqwest = { version = "0.12.24", features = ["json"] } # HTTP 客户端
+anyhow = "1.0"       # 错误处理
+async-trait = "0.1"  # 允许在 Trait 中使用 async
+serde = { version = "1.0", features = ["derive"] } # 序列化
+serde_json = "1.0"   # JSON 解析
+toml = "0.9.8"         # TOML 解析
+regex = "1.10"       # 正则表达式 (用于处理 apt/pip 配置)
+futures = "0.3"       # 异步运行时
+thiserror = "2.0.17"
+directories = "6.0.0"
+indicatif = "0.18.3"
+
+[dev-dependencies]
+tempfile = "3.23.0"
