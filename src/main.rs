@@ -91,7 +91,7 @@ async fn handle_status(name: Option<String>) -> Result<()> {
 
         // Handle potential errors gracefully instead of crashing the whole status command
         let current_url_res = manager.current_url().await;
-        
+
         let current_url = current_url_res.unwrap_or_default();
 
         let candidates = manager.list_candidates();
@@ -137,27 +137,30 @@ async fn handle_test(name: &str) -> Result<()> {
     let mut current_url_opt = manager.current_url().await.ok().flatten();
 
     if current_url_opt.is_none() {
-         // Fallback to Official if available in candidates
-         if let Some(official) = candidates.iter().find(|m| m.name.eq_ignore_ascii_case("Official")) {
-             current_url_opt = Some(official.url.clone());
-         }
+        // Fallback to Official if available in candidates
+        if let Some(official) = candidates
+            .iter()
+            .find(|m| m.name.eq_ignore_ascii_case("Official"))
+        {
+            current_url_opt = Some(official.url.clone());
+        }
     }
 
     // 2. Add "Current" to candidates if it's a custom one (not in list)
     if let Some(ref current_url) = current_url_opt {
         // Check if this URL is already in candidates (normalized check)
-        let is_known = candidates.iter().any(|m| 
-            m.url == *current_url || 
-            m.url.trim_end_matches('/') == current_url.trim_end_matches('/')
-        );
-        
+        let is_known = candidates.iter().any(|m| {
+            m.url == *current_url
+                || m.url.trim_end_matches('/') == current_url.trim_end_matches('/')
+        });
+
         if !is_known {
             candidates.push(Mirror::new("Current", current_url));
         }
     }
 
     let results = utils::benchmark_mirrors(candidates).await;
-    
+
     println!(); // Newline after progress bar
     println!(); // Additional newline for visual separation
 
@@ -185,40 +188,43 @@ async fn handle_test(name: &str) -> Result<()> {
     if let Some(best) = results.first() {
         if best.latency_ms < u64::MAX {
             println!("{}", "-".repeat(60));
-            
-            let mut speedup_msg = None;
-            
-            if let Some(ref current_url) = current_url_opt {
-                 // Find the result corresponding to current_url
-                 let current_res = results.iter().find(|r| 
-                    r.mirror.url == *current_url || 
-                    r.mirror.url.trim_end_matches('/') == current_url.trim_end_matches('/')
-                 );
 
-                 if let Some(cur) = current_res {
-                     if cur.latency_ms < u64::MAX {
-                         if cur.latency_ms > best.latency_ms {
-                             let speedup = cur.latency_ms as f64 / best.latency_ms as f64;
-                             speedup_msg = Some(format!("Recommendation: '{}' is {:.1}x faster than your current source.", best.mirror.name, speedup));
-                         } else if cur.latency_ms == best.latency_ms {
-                             speedup_msg = Some(format!("Recommendation: Your current source '{}' is already the fastest.", cur.mirror.name));
-                         }
-                     } else {
-                         speedup_msg = Some(format!("Recommendation: '{}' is significantly faster than your current source (Timeout).", best.mirror.name));
-                     }
-                 }
+            let mut speedup_msg = None;
+
+            if let Some(ref current_url) = current_url_opt {
+                // Find the result corresponding to current_url
+                let current_res = results.iter().find(|r| {
+                    r.mirror.url == *current_url
+                        || r.mirror.url.trim_end_matches('/') == current_url.trim_end_matches('/')
+                });
+
+                if let Some(cur) = current_res {
+                    if cur.latency_ms < u64::MAX {
+                        if cur.latency_ms > best.latency_ms {
+                            let speedup = cur.latency_ms as f64 / best.latency_ms as f64;
+                            speedup_msg = Some(format!(
+                                "Recommendation: '{}' is {:.1}x faster than your current source.",
+                                best.mirror.name, speedup
+                            ));
+                        } else if cur.latency_ms == best.latency_ms {
+                            speedup_msg = Some(format!(
+                                "Recommendation: Your current source '{}' is already the fastest.",
+                                cur.mirror.name
+                            ));
+                        }
+                    } else {
+                        speedup_msg = Some(format!("Recommendation: '{}' is significantly faster than your current source (Timeout).", best.mirror.name));
+                    }
+                }
             }
-            
+
             if let Some(msg) = speedup_msg {
                 println!("{}", msg);
             } else {
-                 println!("Recommendation: '{}' is the fastest.", best.mirror.name);
+                println!("Recommendation: '{}' is the fastest.", best.mirror.name);
             }
-            
-            println!(
-                "Run 'cmirror use {} {}' to apply.",
-                name, best.mirror.name
-            );
+
+            println!("Run 'cmirror use {} {}' to apply.", name, best.mirror.name);
         }
     }
 

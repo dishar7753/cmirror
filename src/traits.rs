@@ -1,6 +1,6 @@
-use async_trait::async_trait;
 use crate::error::Result;
 use crate::types::Mirror;
+use async_trait::async_trait;
 use std::path::PathBuf;
 
 /// SourceManager: 所有镜像源管理模块必须实现的接口

@@ -1,7 +1,7 @@
+use crate::config;
+use crate::error::{MirrorError, Result};
 use crate::traits::SourceManager;
 use crate::types::Mirror;
-use crate::error::{Result, MirrorError};
-use crate::config;
 use async_trait::async_trait;
 use std::path::PathBuf;
 use tokio::process::Command;
@@ -32,15 +32,12 @@ impl SourceManager for GoManager {
         // Go configuration is managed via the 'go env' command,
         // which writes to a platform-specific file (e.g., ~/.config/go/env).
         // Returning a placeholder or trying to resolve `go env GOENV`.
-        PathBuf::from("GO111MODULE/GOPROXY") 
+        PathBuf::from("GO111MODULE/GOPROXY")
     }
 
     async fn current_url(&self) -> Result<Option<String>> {
         // Use `go env GOPROXY` to get the current value
-        let output = Command::new("go")
-            .args(["env", "GOPROXY"])
-            .output()
-            .await;
+        let output = Command::new("go").args(["env", "GOPROXY"]).output().await;
 
         match output {
             Ok(o) if o.status.success() => {
@@ -62,14 +59,16 @@ impl SourceManager for GoManager {
         // Use `go env -w GOPROXY=...`
         // Append ",direct" to ensure fallback works for private modules
         let new_val = format!("{},direct", mirror.url);
-        
+
         let status = Command::new("go")
             .args(["env", "-w", &format!("GOPROXY={}", new_val)])
             .status()
             .await?;
 
         if !status.success() {
-             return Err(MirrorError::Custom("Failed to set GOPROXY via 'go env -w'".to_string()));
+            return Err(MirrorError::Custom(
+                "Failed to set GOPROXY via 'go env -w'".to_string(),
+            ));
         }
 
         Ok(())
@@ -81,9 +80,11 @@ impl SourceManager for GoManager {
             .args(["env", "-u", "GOPROXY"])
             .status()
             .await?;
-            
+
         if !status.success() {
-             return Err(MirrorError::Custom("Failed to unset GOPROXY via 'go env -u'".to_string()));
+            return Err(MirrorError::Custom(
+                "Failed to unset GOPROXY via 'go env -u'".to_string(),
+            ));
         }
         Ok(())
     }

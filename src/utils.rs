@@ -1,10 +1,10 @@
+use crate::error::{MirrorError, Result};
 use crate::types::{BenchmarkResult, Mirror};
-use reqwest::Client;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use std::path::Path;
-use tokio::fs;
-use crate::error::{Result, MirrorError};
 use indicatif::{ProgressBar, ProgressStyle};
+use reqwest::Client;
+use std::path::Path;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use tokio::fs;
 
 // 设置全局请求超时，防止慢源阻塞整个流程太久
 const REQUEST_TIMEOUT: u64 = 3;
@@ -23,7 +23,7 @@ pub async fn backup_file(path: &Path) -> Result<()> {
         let file_name = path.file_name().unwrap_or_default().to_string_lossy();
         let backup_name = format!("{}.bak.{}", file_name, timestamp);
         let backup_path = path.with_file_name(backup_name);
-        
+
         fs::copy(path, &backup_path).await?;
         println!("Backup created at: {:?}", backup_path);
     }
@@ -37,7 +37,10 @@ pub async fn restore_latest_backup(path: &Path) -> Result<()> {
     let prefix = format!("{}.bak.", file_name);
 
     if !fs::try_exists(parent).await.unwrap_or(false) {
-         return Err(MirrorError::Custom(format!("Directory not found: {:?}", parent)));
+        return Err(MirrorError::Custom(format!(
+            "Directory not found: {:?}",
+            parent
+        )));
     }
 
     let mut entries = fs::read_dir(parent).await?;
@@ -100,46 +103,29 @@ pub async fn benchmark_mirrors(mirrors: Vec<Mirror>) -> Vec<BenchmarkResult> {
         }
     });
 
-        // 并发执行所有 Future
+    // 并发执行所有 Future
 
-        let mut results = futures::future::join_all(tasks).await;
+    let mut results = futures::future::join_all(tasks).await;
 
-        
+    pb.finish_with_message("Testing completed.");
 
-        pb.finish_with_message("Testing completed.");
+    // 排序: 延迟低的在前, 失败的(MAX)在后
 
-    
+    results.sort_by_key(|r| r.latency_ms);
 
-        // 排序: 延迟低的在前, 失败的(MAX)在后
+    results
+}
 
-        results.sort_by_key(|r| r.latency_ms);
-
-    
-
-        results
-
-    }
-
-    
-
-    /// 单个源测速逻辑
-    async fn check_latency(client: &Client, mirror: Mirror) -> BenchmarkResult {
-
-        let start = Instant::now();
-
-    
-
-    
+/// 单个源测速逻辑
+async fn check_latency(client: &Client, mirror: Mirror) -> BenchmarkResult {
+    let start = Instant::now();
 
     // Clean URL for benchmarking (remove cargo's "sparse+" or "git+" prefixes)
 
-    let url_to_test = mirror.url
-
+    let url_to_test = mirror
+        .url
         .trim_start_matches("sparse+")
-
         .trim_start_matches("git+");
-
-
 
     // 使用 HEAD 请求而不是 GET，只获取元数据，速度更快且省流量
 
@@ -147,46 +133,25 @@ pub async fn benchmark_mirrors(mirrors: Vec<Mirror>) -> Vec<BenchmarkResult> {
 
     let request = client.head(url_to_test).send();
 
-
-
     let latency_ms = match request.await {
-
         Ok(resp) => {
-
             if resp.status().is_success() {
-
                 // 计算 TTFB (Time To First Byte)
 
                 start.elapsed().as_millis() as u64
-
             } else {
-
                 // 虽然连上了，但返回 404/500 等错误，视为不可用
 
-                u64::MAX 
-
+                u64::MAX
             }
-
         }
 
         Err(_) => {
-
             // 连接超时、DNS 解析失败等
 
             u64::MAX
-
         }
-
     };
 
-
-
-    BenchmarkResult {
-
-        mirror,
-
-        latency_ms,
-
-    }
-
+    BenchmarkResult { mirror, latency_ms }
 }

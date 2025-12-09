@@ -1,13 +1,13 @@
+use crate::config;
+use crate::error::Result;
 use crate::traits::SourceManager;
 use crate::types::Mirror;
-use crate::error::Result;
-use crate::config;
 use crate::utils;
 use async_trait::async_trait;
-use serde_json::Value;
-use tokio::fs;
-use std::path::PathBuf;
 use directories::BaseDirs;
+use serde_json::Value;
+use std::path::PathBuf;
+use tokio::fs;
 
 pub struct DockerManager;
 
@@ -53,7 +53,7 @@ impl SourceManager for DockerManager {
 
         // 读取并解析 JSON
         let content = fs::read_to_string(&path).await?;
-        
+
         let v: Value = serde_json::from_str(&content)?;
 
         // 提取 registry-mirrors 数组的第一个元素
@@ -66,70 +66,45 @@ impl SourceManager for DockerManager {
         Ok(None)
     }
 
-        async fn set_source(&self, mirror: &Mirror) -> Result<()> {
+    async fn set_source(&self, mirror: &Mirror) -> Result<()> {
+        let path = self.config_path();
 
-            let path = self.config_path();
+        // 1. 读取现有配置或创建空对象
 
-    
+        let mut config: Value = if fs::try_exists(&path).await.unwrap_or(false) {
+            let content = fs::read_to_string(&path).await?;
 
-            // 1. 读取现有配置或创建空对象
+            serde_json::from_str(&content).unwrap_or(serde_json::json!({}))
+        } else {
+            // 确保目录存在
 
-            let mut config: Value = if fs::try_exists(&path).await.unwrap_or(false) {
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent).await?;
+            }
 
-                let content = fs::read_to_string(&path).await?;
+            serde_json::json!({})
+        };
 
-                serde_json::from_str(&content).unwrap_or(serde_json::json!({}))
+        // 2. 备份
 
-            } else {
+        utils::backup_file(&path).await?;
 
-                // 确保目录存在
+        // 3. 修改 registry-mirrors 字段
 
-                if let Some(parent) = path.parent() {
+        // Docker 支持配置多个 mirror，但为了简单起见，我们把选中的置为唯一一个或第一个
 
-                    fs::create_dir_all(parent).await?;
+        config["registry-mirrors"] = serde_json::json!([mirror.url]);
 
-                }
+        // 4. 写入文件 (Pretty print 格式化)
 
-                serde_json::json!({})
+        let new_content = serde_json::to_string_pretty(&config)?;
 
-            };
+        fs::write(&path, new_content).await?;
 
-    
-
-            // 2. 备份
-
-            utils::backup_file(&path).await?;
-
-    
-
-            // 3. 修改 registry-mirrors 字段
-
-            // Docker 支持配置多个 mirror，但为了简单起见，我们把选中的置为唯一一个或第一个
-
-            config["registry-mirrors"] = serde_json::json!([mirror.url]);
-
-    
-
-            // 4. 写入文件 (Pretty print 格式化)
-
-            let new_content = serde_json::to_string_pretty(&config)?;
-
-            fs::write(&path, new_content).await?;
-
-    
-
-            Ok(())
-
-        }
-
-    
-
-        async fn restore(&self) -> Result<()> {
-
-            utils::restore_latest_backup(&self.config_path()).await
-
-        }
-
+        Ok(())
     }
 
-    
+    async fn restore(&self) -> Result<()> {
+        utils::restore_latest_backup(&self.config_path()).await
+    }
+}

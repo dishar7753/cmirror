@@ -1,7 +1,7 @@
+use crate::config;
+use crate::error::{MirrorError, Result};
 use crate::traits::SourceManager;
 use crate::types::Mirror;
-use crate::error::{Result, MirrorError};
-use crate::config;
 use crate::utils;
 use async_trait::async_trait;
 use directories::BaseDirs;
@@ -19,7 +19,9 @@ impl CargoManager {
 
     #[cfg(test)]
     pub fn with_path(path: PathBuf) -> Self {
-        Self { custom_path: Some(path) }
+        Self {
+            custom_path: Some(path),
+        }
     }
 }
 
@@ -53,21 +55,24 @@ impl SourceManager for CargoManager {
         }
 
         let content = fs::read_to_string(&path).await?;
-        let config: toml::Value = toml::from_str(&content).unwrap_or(toml::Value::Table(toml::map::Map::new()));
+        let config: toml::Value =
+            toml::from_str(&content).unwrap_or(toml::Value::Table(toml::map::Map::new()));
 
         // Check [source.crates-io] replace-with
-        if let Some(replace_with) = config.get("source")
+        if let Some(replace_with) = config
+            .get("source")
             .and_then(|s| s.get("crates-io"))
             .and_then(|c| c.get("replace-with"))
             .and_then(|v| v.as_str())
         {
             // If replace-with is set (e.g., "mirror"), look up [source.mirror]
-            if let Some(registry) = config.get("source")
+            if let Some(registry) = config
+                .get("source")
                 .and_then(|s| s.get(replace_with))
                 .and_then(|m| m.get("registry"))
-                .and_then(|r| r.as_str()) 
+                .and_then(|r| r.as_str())
             {
-                 return Ok(Some(registry.to_string()));
+                return Ok(Some(registry.to_string()));
             }
         }
 
@@ -95,30 +100,51 @@ impl SourceManager for CargoManager {
         }
 
         // 4. Update TOML
-        let mut config: toml::Value = toml::from_str(&content).unwrap_or(toml::Value::Table(toml::map::Map::new()));
-        
-        // We need to modify the table structure. 
+        let mut config: toml::Value =
+            toml::from_str(&content).unwrap_or(toml::Value::Table(toml::map::Map::new()));
+
+        // We need to modify the table structure.
         // Since `toml` crate Value is not easily mutable deeply, let's reconstruct parts of it.
         // Or simpler: Parse as Table, modify, serialize.
-        
-        let root = config.as_table_mut().ok_or(MirrorError::Custom("Invalid config.toml format".to_string()))?;
+
+        let root = config.as_table_mut().ok_or(MirrorError::Custom(
+            "Invalid config.toml format".to_string(),
+        ))?;
 
         // Ensure [source] table exists
-        let source_entry = root.entry("source").or_insert(toml::Value::Table(toml::map::Map::new()));
-        let source_table = source_entry.as_table_mut().ok_or(MirrorError::Custom("Invalid [source] section".to_string()))?;
+        let source_entry = root
+            .entry("source")
+            .or_insert(toml::Value::Table(toml::map::Map::new()));
+        let source_table = source_entry
+            .as_table_mut()
+            .ok_or(MirrorError::Custom("Invalid [source] section".to_string()))?;
 
         // 4.1 Set [source.crates-io] replace-with = 'mirror'
-        let crates_io_entry = source_table.entry("crates-io").or_insert(toml::Value::Table(toml::map::Map::new()));
-        let crates_io_table = crates_io_entry.as_table_mut().ok_or(MirrorError::Custom("Invalid [source.crates-io] section".to_string()))?;
-        
+        let crates_io_entry = source_table
+            .entry("crates-io")
+            .or_insert(toml::Value::Table(toml::map::Map::new()));
+        let crates_io_table = crates_io_entry.as_table_mut().ok_or(MirrorError::Custom(
+            "Invalid [source.crates-io] section".to_string(),
+        ))?;
+
         // Use a generic name 'mirror' for the replacement source
-        crates_io_table.insert("replace-with".to_string(), toml::Value::String("mirror".to_string()));
+        crates_io_table.insert(
+            "replace-with".to_string(),
+            toml::Value::String("mirror".to_string()),
+        );
 
         // 4.2 Set [source.mirror] registry = "..."
-        let mirror_entry = source_table.entry("mirror").or_insert(toml::Value::Table(toml::map::Map::new()));
-        let mirror_table = mirror_entry.as_table_mut().ok_or(MirrorError::Custom("Invalid [source.mirror] section".to_string()))?;
-        
-        mirror_table.insert("registry".to_string(), toml::Value::String(mirror.url.clone()));
+        let mirror_entry = source_table
+            .entry("mirror")
+            .or_insert(toml::Value::Table(toml::map::Map::new()));
+        let mirror_table = mirror_entry.as_table_mut().ok_or(MirrorError::Custom(
+            "Invalid [source.mirror] section".to_string(),
+        ))?;
+
+        mirror_table.insert(
+            "registry".to_string(),
+            toml::Value::String(mirror.url.clone()),
+        );
 
         // 5. Write back
         let new_content = toml::to_string_pretty(&config)?;
@@ -155,7 +181,7 @@ mod tests {
 
         // 3. Check current
         assert_eq!(manager.current_url().await?, Some(mirror.url.clone()));
-        
+
         // Check TOML structure
         let content = fs::read_to_string(&config_path).await?;
         assert!(content.contains("[source.crates-io]"));

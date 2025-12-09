@@ -1,13 +1,13 @@
+use crate::config;
+use crate::error::Result;
 use crate::traits::SourceManager;
 use crate::types::Mirror;
-use crate::error::Result;
-use crate::config;
 use crate::utils;
 use async_trait::async_trait;
-use regex::Regex;
-use tokio::fs;
-use std::path::PathBuf;
 use directories::BaseDirs;
+use regex::Regex;
+use std::path::PathBuf;
+use tokio::fs;
 
 pub struct PipManager {
     custom_path: Option<PathBuf>,
@@ -20,7 +20,9 @@ impl PipManager {
 
     #[cfg(test)]
     pub fn with_path(path: PathBuf) -> Self {
-        Self { custom_path: Some(path) }
+        Self {
+            custom_path: Some(path),
+        }
     }
 }
 
@@ -70,7 +72,7 @@ impl SourceManager for PipManager {
         // 使用正则提取 index-url 的值
         // 支持 index-url = https://... 或 index-url=https://...
         let re = Regex::new(r"(?m)^index-url\s*=\s*(.+)$")?;
-        
+
         if let Some(caps) = re.captures(&content) {
             // 提取第一个捕获组
             Ok(Some(caps[1].trim().to_string()))
@@ -164,13 +166,13 @@ mod tests {
             url: "https://test2.pypi.org/simple".to_string(),
         };
         // Sleep a bit to ensure timestamp diff if backup naming relies on second precision
-        // (Our utils uses seconds, so we might overwrite backup if too fast? 
+        // (Our utils uses seconds, so we might overwrite backup if too fast?
         // utils::backup_file uses SystemTime::now()...as_secs(). If running super fast, timestamp might be same.
-        // But backup_file appends timestamp. If same timestamp, it overwrites the backup. 
+        // But backup_file appends timestamp. If same timestamp, it overwrites the backup.
         // Restore finds the latest backup. If we have only one (overwritten), it restores that.)
         // Let's explicitly sleep 1s to be safe or just proceed.
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-        
+
         manager.set_source(&mirror2).await?;
         assert_eq!(manager.current_url().await?, Some(mirror2.url.clone()));
 
@@ -182,6 +184,3 @@ mod tests {
         Ok(())
     }
 }
-
-
-    

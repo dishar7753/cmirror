@@ -1,13 +1,13 @@
-pub mod pip;
-pub mod docker;
-pub mod npm;
-pub mod go;
-pub mod cargo;
-pub mod brew;
 pub mod apt;
+pub mod brew;
+pub mod cargo;
+pub mod docker;
+pub mod go;
+pub mod npm;
+pub mod pip;
 
+use crate::error::{MirrorError, Result};
 use crate::traits::SourceManager;
-use crate::error::{Result, MirrorError};
 
 pub const SUPPORTED_TOOLS: &[&str] = &["pip", "npm", "docker", "go", "cargo", "brew", "apt"];
 
@@ -21,8 +21,8 @@ pub fn get_manager(name: &str) -> Result<Box<dyn SourceManager>> {
         "brew" => Ok(Box::new(brew::BrewManager::new())),
         "apt" => Ok(Box::new(apt::AptManager::new())),
         _ => Err(MirrorError::UnknownTool(format!(
-            "Unsupported tool: '{}'. Available: {}", 
-            name, 
+            "Unsupported tool: '{}'. Available: {}",
+            name,
             SUPPORTED_TOOLS.join(", ")
         ))),
     }

@@ -1,8 +1,8 @@
 use crate::types::Mirror;
-use std::collections::HashMap;
-use std::sync::OnceLock;
-use std::fs;
 use directories::ProjectDirs;
+use std::collections::HashMap;
+use std::fs;
+use std::sync::OnceLock;
 
 // Include the JSON file at compile time
 const MIRRORS_JSON: &str = include_str!("../assets/mirrors.json");

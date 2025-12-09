@@ -1,13 +1,13 @@
+use crate::config;
+use crate::error::Result;
 use crate::traits::SourceManager;
 use crate::types::Mirror;
-use crate::error::Result;
-use crate::config;
 use crate::utils;
 use async_trait::async_trait;
-use regex::Regex;
-use tokio::fs;
-use std::path::PathBuf;
 use directories::BaseDirs;
+use regex::Regex;
+use std::path::PathBuf;
+use tokio::fs;
 
 pub struct NpmManager {
     custom_path: Option<PathBuf>,
@@ -20,7 +20,9 @@ impl NpmManager {
 
     #[cfg(test)]
     pub fn with_path(path: PathBuf) -> Self {
-        Self { custom_path: Some(path) }
+        Self {
+            custom_path: Some(path),
+        }
     }
 }
 
@@ -57,7 +59,7 @@ impl SourceManager for NpmManager {
 
         // Match "registry=https://..."
         let re = Regex::new(r"(?m)^registry\s*=\s*(.+)$")?;
-        
+
         if let Some(caps) = re.captures(&content) {
             Ok(Some(caps[1].trim().to_string()))
         } else {
@@ -92,7 +94,11 @@ impl SourceManager for NpmManager {
         let new_content = if re.is_match(&content) {
             re.replace(&content, new_line.as_str()).to_string()
         } else {
-            let prefix = if content.is_empty() || content.ends_with('\n') { "" } else { "\n" };
+            let prefix = if content.is_empty() || content.ends_with('\n') {
+                ""
+            } else {
+                "\n"
+            };
             format!("{}{}{}\n", content, prefix, new_line)
         };
 
@@ -129,7 +135,7 @@ mod tests {
 
         // 3. Check current
         assert_eq!(manager.current_url().await?, Some(mirror.url.clone()));
-        
+
         let content = fs::read_to_string(&config_path).await?;
         assert!(content.contains(&format!("registry={}", mirror.url)));
 
