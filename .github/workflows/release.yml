@@ -21,26 +21,31 @@ jobs:
             os: ubuntu-latest
             use_cross: false
             archive_ext: .tar.gz
+            artifact_name: linux-x64
           # macOS x64
           - target: x86_64-apple-darwin
             os: macos-latest
             use_cross: false
             archive_ext: .tar.gz
+            artifact_name: macos-x64
           # macOS ARM64 (M1/M2)
           - target: aarch64-apple-darwin
             os: macos-latest
             use_cross: false
             archive_ext: .tar.gz
+            artifact_name: macos-arm64
           # Windows x64
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             use_cross: false
             archive_ext: .zip
+            artifact_name: windows-x64
           # Linux ARM64 (via Cross)
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
             use_cross: true
             archive_ext: .tar.gz
+            artifact_name: linux-arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -72,16 +77,16 @@ jobs:
         shell: bash
         run: |
           cd target/${{ matrix.target }}/release
-          tar -czf ../../../cmirror-${{ matrix.target }}${{ matrix.archive_ext }} cmirror
+          tar -czf ../../../cmirror-${{ matrix.artifact_name }}${{ matrix.archive_ext }} cmirror
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
         shell: powershell
         run: |
           cd target/${{ matrix.target }}/release
-          Compress-Archive -Path cmirror.exe -DestinationPath ..\..\..\cmirror-${{ matrix.target }}${{ matrix.archive_ext }}
+          Compress-Archive -Path cmirror.exe -DestinationPath ..\..\..\cmirror-${{ matrix.artifact_name }}${{ matrix.archive_ext }}
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: cmirror-${{ matrix.target }}${{ matrix.archive_ext }}
+          files: cmirror-${{ matrix.artifact_name }}${{ matrix.archive_ext }}

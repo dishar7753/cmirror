@@ -1,6 +1,7 @@
 {
   "docker": [
     { "name": "CertAuth", "url": "https://hub.certauth.top/" },
+    { "name": "Geekery", "url": "https://ghcr.geekery.cn/" },
     { "name": "DockerProxy", "url": "https://dockerproxy.com" },
     { "name": "DaoCloud", "url": "https://f1361db2.m.daocloud.io" },
     { "name": "NanjingU", "url": "https://docker.nju.edu.cn" },

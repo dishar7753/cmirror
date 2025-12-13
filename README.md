@@ -25,15 +25,95 @@ Cmirror 是一个基于 Rust 编写的跨平台命令行工具，旨在解决国
 
 ## 🚀 安装指南
 
-### 前置要求
+### 方式一：下载预编译二进制文件（推荐）
 
-确保你已经安装了 Rust 工具链 (Cargo)。
+从 [Releases](https://github.com/ox01024/cmirror/releases) 页面下载适合你系统的压缩包：
 
-### 源码安装
+**Linux (x86_64):**
+```bash
+# 下载并解压
+wget https://github.com/ox01024/cmirror/releases/latest/download/cmirror-linux-x64.tar.gz
+tar -xzf cmirror-linux-x64.tar.gz
+
+# 添加执行权限
+chmod +x cmirror
+
+# 移动到系统路径（可选）
+sudo mv cmirror /usr/local/bin/
+
+# 验证安装
+cmirror --help
+```
+
+**Linux (ARM64):**
+```bash
+# 下载并解压
+wget https://github.com/ox01024/cmirror/releases/latest/download/cmirror-linux-arm64.tar.gz
+tar -xzf cmirror-linux-arm64.tar.gz
+
+# 添加执行权限
+chmod +x cmirror
+
+# 移动到系统路径（可选）
+sudo mv cmirror /usr/local/bin/
+
+# 验证安装
+cmirror --help
+```
+
+**macOS (Apple Silicon):**
+```bash
+# 下载并解压
+curl -L -o cmirror-macos-arm64.tar.gz https://github.com/ox01024/cmirror/releases/latest/download/cmirror-macos-arm64.tar.gz
+tar -xzf cmirror-macos-arm64.tar.gz
+
+# 添加执行权限
+chmod +x cmirror
+
+# 移动到系统路径（可选）
+sudo mv cmirror /usr/local/bin/
+
+# 验证安装
+cmirror --help
+```
+
+**macOS (Intel):**
+```bash
+# 下载并解压
+curl -L -o cmirror-macos-x64.tar.gz https://github.com/ox01024/cmirror/releases/latest/download/cmirror-macos-x64.tar.gz
+tar -xzf cmirror-macos-x64.tar.gz
+
+# 添加执行权限
+chmod +x cmirror
+
+# 移动到系统路径（可选）
+sudo mv cmirror /usr/local/bin/
+
+# 验证安装
+cmirror --help
+```
+
+**Windows:**
+```powershell
+# 下载压缩包
+Invoke-WebRequest -Uri "https://github.com/ox01024/cmirror/releases/latest/download/cmirror-windows-x64.zip" -OutFile "cmirror.zip"
+
+# 解压
+Expand-Archive -Path cmirror.zip -DestinationPath .
+
+# 将 cmirror.exe 添加到 PATH 环境变量，或移动到已在 PATH 中的目录
+
+# 验证安装
+.\cmirror.exe --help
+```
+
+### 方式二：源码编译安装
+
+**前置要求：** 确保你已经安装了 Rust 工具链 (Cargo)。
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/your-username/cmirror.git
+git clone https://github.com/ox01024/cmirror.git
 cd cmirror
 
 # 2. 编译并安装
