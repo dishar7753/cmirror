@@ -1,4 +1,3 @@
-
 use crate::config;
 use crate::error::{MirrorError, Result};
 use crate::traits::SourceManager;
@@ -44,7 +43,7 @@ impl SourceManager for UvManager {
         if let Some(ref path) = self.custom_path {
             return path.clone();
         }
-        
+
         // 1. Check current directory (Project level)
         let local_path = PathBuf::from("uv.toml");
         if local_path.exists() {
@@ -67,13 +66,17 @@ impl SourceManager for UvManager {
         }
 
         let content = fs::read_to_string(&path).await?;
-        let config: toml::Value = 
+        let config: toml::Value =
             toml::from_str(&content).unwrap_or(toml::Value::Table(toml::map::Map::new()));
 
         // Look for [[index]] with default = true
         if let Some(indices) = config.get("index").and_then(|v| v.as_array()) {
             for index in indices {
-                if index.get("default").and_then(|v| v.as_bool()).unwrap_or(false) {
+                if index
+                    .get("default")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false)
+                {
                     if let Some(url) = index.get("url").and_then(|v| v.as_str()) {
                         return Ok(Some(url.to_string()));
                     }
@@ -105,28 +108,35 @@ impl SourceManager for UvManager {
         }
 
         // 4. Update TOML
-        let mut config: toml::Value = 
+        let mut config: toml::Value =
             toml::from_str(&content).unwrap_or(toml::Value::Table(toml::map::Map::new()));
 
-        let root = config.as_table_mut().ok_or(MirrorError::Custom(
-            "Invalid uv.toml format".to_string(),
-        ))?;
+        let root = config
+            .as_table_mut()
+            .ok_or(MirrorError::Custom("Invalid uv.toml format".to_string()))?;
 
         // Handle [[index]]
         // If "index" key doesn't exist, create it as array
         if !root.contains_key("index") {
-             root.insert("index".to_string(), toml::Value::Array(Vec::new()));
+            root.insert("index".to_string(), toml::Value::Array(Vec::new()));
         }
 
-        let indices = root.get_mut("index")
-            .and_then(|v| v.as_array_mut())
-            .ok_or(MirrorError::Custom("Invalid 'index' in uv.toml (expected array)".to_string()))?;
+        let indices =
+            root.get_mut("index")
+                .and_then(|v| v.as_array_mut())
+                .ok_or(MirrorError::Custom(
+                    "Invalid 'index' in uv.toml (expected array)".to_string(),
+                ))?;
 
         // Check if there is already a default index
         let mut found_default = false;
         for index in indices.iter_mut() {
             if let Some(table) = index.as_table_mut() {
-                if table.get("default").and_then(|v| v.as_bool()).unwrap_or(false) {
+                if table
+                    .get("default")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false)
+                {
                     // Update existing default
                     table.insert("url".to_string(), toml::Value::String(mirror.url.clone()));
                     // Ensure name matches if we want (optional, but keeping existing name is good)
@@ -196,7 +206,7 @@ mod tests {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         manager.set_source(&mirror2).await?;
         assert_eq!(manager.current_url().await?, Some(mirror2.url.clone()));
-        
+
         let content2 = fs::read_to_string(&config_path).await?;
         assert!(content2.contains(&format!("url = \"{}\"", mirror2.url)));
 
